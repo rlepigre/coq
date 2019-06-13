@@ -982,7 +982,7 @@ struct
     let pretype tycon env sigma c = eval_pretyper self ~program_mode ~poly resolve_tc tycon env sigma c in
     let pretype_type tycon env sigma c = eval_type_pretyper self ~program_mode ~poly resolve_tc tycon env sigma c in
     let sigma, cj = pretype empty_tycon env sigma c in
-    let (IndType (indf,realargs)) =
+    let (IndType (indf,realargs)) as indty =
       try find_rectype !!env sigma cj.uj_type
       with Not_found ->
         let cloc = loc_of_glob_constr c in
@@ -1019,11 +1019,11 @@ struct
     let fsign = Context.Rel.map (whd_betaiota sigma) fsign in
     let hypnaming = if program_mode then ProgramNaming else KeepUserNameAndRenameExistingButSectionNames in
     let fsign,env_f = push_rel_context ~hypnaming sigma fsign env in
-    let obj ind rci p v f =
+    let obj indt rci p v f =
       if not record then
         let f = it_mkLambda_or_LetIn f fsign in
-        let ci = make_case_info !!env (fst ind) rci LetStyle in
-          mkCase (ci, p, cj.uj_val,[|f|])
+        let ci = make_case_info !!env (ind_of_ind_type indt) rci LetStyle in
+          mkCase (ci, p, make_case_invert !!env indt ci, cj.uj_val,[|f|])
       else it_mkLambda_or_LetIn f fsign
     in
     (* Make dependencies from arity signature impossible *)
@@ -1051,7 +1051,7 @@ struct
             let v =
               let ind,_ = dest_ind_family indf in
                 let rci = Typing.check_allowed_sort !!env sigma ind cj.uj_val p in
-                obj ind rci p cj.uj_val fj.uj_val
+                obj indty rci p cj.uj_val fj.uj_val
             in
             sigma, { uj_val = v; uj_type = (substl (realargs@[cj.uj_val]) ccl) }
 
@@ -1070,7 +1070,7 @@ struct
             let v =
               let ind,_ = dest_ind_family indf in
                 let rci = Typing.check_allowed_sort !!env sigma ind cj.uj_val p in
-                obj ind rci p cj.uj_val fj.uj_val
+                obj indty rci p cj.uj_val fj.uj_val
             in sigma, { uj_val = v; uj_type = ccl })
 
   let pretype_cases self (sty, po, tml, eqns)  =
@@ -1083,7 +1083,7 @@ struct
     let open Context.Rel.Declaration in
     let pretype tycon env sigma c = eval_pretyper self ~program_mode ~poly resolve_tc tycon env sigma c in
     let sigma, cj = pretype empty_tycon env sigma c in
-    let (IndType (indf,realargs)) =
+    let (IndType (indf,realargs)) as indty =
       try find_rectype !!env sigma cj.uj_type
       with Not_found ->
         let cloc = loc_of_glob_constr c in
@@ -1139,7 +1139,7 @@ struct
         let pred = nf_evar sigma pred in
         let rci = Typing.check_allowed_sort !!env sigma ind cj.uj_val pred in
         let ci = make_case_info !!env (fst ind) rci IfStyle in
-          mkCase (ci, pred, cj.uj_val, [|b1;b2|])
+          mkCase (ci, pred, make_case_invert !!env indty ci, cj.uj_val, [|b1;b2|])
       in
       let cj = { uj_val = v; uj_type = p } in
       discard_trace @@ inh_conv_coerce_to_tycon ?loc ~program_mode resolve_tc env sigma cj tycon

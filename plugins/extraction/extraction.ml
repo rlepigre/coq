@@ -671,8 +671,10 @@ let rec extract_term env sg mle mlt c args =
         (* we unify it with an fresh copy of the stored type of [Rel n]. *)
         let extract_rel mlt = put_magic (mlt, Mlenv.get mle n) (MLrel n)
         in extract_app env sg mle mlt extract_rel args
-    | Case ({ci_ind=ip},_,c0,br) ->
-        extract_app env sg mle mlt (extract_case env sg mle (ip,c0,br)) args
+    | Case ({ci_ind=ip},_,iv,c0,br) ->
+      assert (iv == Constr.NoInvert); (* otherwise case from SProp -> erased
+        (TODO check if this is actually how it works) *)
+      extract_app env sg mle mlt (extract_case env sg mle (ip,c0,br)) args
     | Fix ((_,i),recd) ->
         extract_app env sg mle mlt (extract_fix env sg mle i recd) args
     | CoFix (i,recd) ->
@@ -1072,7 +1074,7 @@ let fake_match_projection env p =
       else
         let p = mkLambda (x, lift 1 indty, liftn 1 2 ty) in
         let branch = lift 1 (it_mkLambda_or_LetIn (mkRel (List.length ctx - (j-1))) ctx) in
-        let body = mkCase (ci, p, mkRel 1, [|branch|]) in
+        let body = mkCase (ci, p, NoInvert, mkRel 1, [|branch|]) in
         it_mkLambda_or_LetIn (mkLambda (x,indty,body)) mib.mind_params_ctxt
     | LocalDef (_,c,t) :: rem ->
       let c = liftn 1 j c in

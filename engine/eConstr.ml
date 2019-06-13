@@ -69,7 +69,7 @@ let mkInd i = of_kind (Ind (in_punivs i))
 let mkConstructU pc = of_kind (Construct pc)
 let mkConstruct c = of_kind (Construct (in_punivs c))
 let mkConstructUi ((ind,u),i) = of_kind (Construct ((ind,i),u))
-let mkCase (ci, c, r, p) = of_kind (Case (ci, c, r, p))
+let mkCase (ci, c, iv, r, p) = of_kind (Case (ci, c, iv, r, p))
 let mkFix f = of_kind (Fix f)
 let mkCoFix f = of_kind (CoFix f)
 let mkProj (p, c) = of_kind (Proj (p, c))
@@ -194,7 +194,7 @@ let destCoFix sigma c = match kind sigma c with
 | _ -> raise DestKO
 
 let destCase sigma c = match kind sigma c with
-| Case (ci, t, c, p) -> (ci, t, c, p)
+| Case (ci, t, iv, c, p) -> (ci, t, iv, c, p)
 | _ -> raise DestKO
 
 let destProj sigma c = match kind sigma c with
@@ -356,7 +356,7 @@ let iter_with_full_binders sigma g f n c =
   | LetIn (na,b,t,c) -> f n b; f n t; f (g (LocalDef (na, b, t)) n) c
   | App (c,l) -> f n c; Array.Fun1.iter f n l
   | Evar (_,l) -> Array.Fun1.iter f n l
-  | Case (_,p,c,bl) -> f n p; f n c; Array.Fun1.iter f n bl
+  | Case (_,p,iv,c,bl) -> f n p; iter_invert (f n) iv; f n c; Array.Fun1.iter f n bl
   | Proj (p,c) -> f n c
   | Fix (_,(lna,tl,bl)) ->
     Array.iter (f n) tl;
@@ -772,5 +772,7 @@ let to_named_context =
     = fun Refl x -> x
   in
   gen unsafe_eq
+let to_case_invert = unsafe_to_case_invert
+
 let eq = unsafe_eq
 end

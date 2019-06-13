@@ -95,7 +95,7 @@ Section Opt.
   Local Unset Primitive Projections.
   Record UnitRecord' : SProp := {}.
 End Opt.
-Fail Scheme Induction for UnitRecord' Sort Set.
+Scheme Induction for UnitRecord' Sort Set.
 
 Record sProd (A B : SProp) : SProp := sPair { sFst : A; sSnd : B }.
 
@@ -112,7 +112,8 @@ Inductive Istrue : bool -> SProp := istrue : Istrue true.
 Definition Istrue_sym (b:bool) := if b then sUnit else sEmpty.
 Definition Istrue_to_sym b (i:Istrue b) : Istrue_sym b := match i with istrue => stt end.
 
-Definition Istrue_rec (P:forall b, Istrue b -> Set) (H:P true istrue) b (i:Istrue b) : P b i.
+(* We don't need primitive elimination to relevant types for this *)
+Definition Istrue_rec_alt (P:forall b, Istrue b -> Set) (H:P true istrue) b (i:Istrue b) : P b i.
 Proof.
   destruct b.
   - exact_no_check H.

@@ -128,6 +128,19 @@ let to_rec_declaration (nas, ts, cs) =
   Value.to_array Value.to_constr ts,
   Value.to_array Value.to_constr cs)
 
+let of_case_invert = let open Constr in function
+  | NoInvert -> ValInt 0
+  | CaseInvert {univs;args} ->
+    v_blk 0 [|of_instance univs; of_array of_constr args|]
+
+let to_case_invert = let open Constr in function
+  | ValInt 0 -> NoInvert
+  | ValBlk (0, [|univs;args|]) ->
+    let univs = to_instance univs in
+    let args = to_array to_constr args in
+    CaseInvert {univs;args}
+  | _ -> CErrors.anomaly Pp.(str "unexpected value shape")
+
 let of_result f = function
 | Inl c -> v_blk 0 [|f c|]
 | Inr e -> v_blk 1 [|Value.of_exn e|]
@@ -445,10 +458,11 @@ let () = define1 "constr_kind" constr begin fun c ->
       Value.of_ext Value.val_constructor cstr;
       of_instance u;
     |]
-  | Case (ci, c, t, bl) ->
+  | Case (ci, c, iv, t, bl) ->
     v_blk 13 [|
       Value.of_ext Value.val_case ci;
       Value.of_constr c;
+      of_case_invert iv;
       Value.of_constr t;
       Value.of_array Value.of_constr bl;
     |]
@@ -536,12 +550,13 @@ let () = define1 "constr_make" valexpr begin fun knd ->
     let cstr = Value.to_ext Value.val_constructor cstr in
     let u = to_instance u in
     EConstr.mkConstructU (cstr, u)
-  | (13, [|ci; c; t; bl|]) ->
+  | (13, [|ci; c; iv; t; bl|]) ->
     let ci = Value.to_ext Value.val_case ci in
     let c = Value.to_constr c in
+    let iv = to_case_invert iv in
     let t = Value.to_constr t in
     let bl = Value.to_array Value.to_constr bl in
-    EConstr.mkCase (ci, c, t, bl)
+    EConstr.mkCase (ci, c, iv, t, bl)
   | (14, [|recs; i; nas; ts; cs|]) ->
     let recs = Value.to_array Value.to_int recs in
     let i = Value.to_int i in

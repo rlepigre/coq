@@ -26,6 +26,11 @@ Module Unsafe.
 
 Ltac2 Type case.
 
+Ltac2 Type case_invert := [
+| NoInvert
+| CaseInvert (instance,constr array)
+].
+
 Ltac2 Type kind := [
 | Rel (int)
 | Var (ident)
@@ -40,7 +45,7 @@ Ltac2 Type kind := [
 | Constant (constant, instance)
 | Ind (inductive, instance)
 | Constructor (constructor, instance)
-| Case (case, constr, constr, constr array)
+| Case (case, constr, case_invert, constr, constr array)
 | Fix (int array, int, ident option binder_annot array, constr array, constr array)
 | CoFix (int, ident option binder_annot array, constr array, constr array)
 | Proj (projection, constr)
