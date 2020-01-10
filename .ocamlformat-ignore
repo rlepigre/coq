@@ -50,4 +50,5 @@ plugins/ssrmatching/*
 plugins/syntax/*
 # Enabled: micromega
 # plugins/micromega/*
+# plugins/lean_import/*
 plugins/micromega/micromega.ml
