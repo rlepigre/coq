@@ -88,3 +88,4 @@ plugins/setoid_ring/Rings_Z.v
 plugins/setoid_ring/ZArithRing.v
 plugins/ssr/ssrunder.v
 plugins/ssr/ssrsetoid.v
+plugins/lean_import/LeanImport.v
