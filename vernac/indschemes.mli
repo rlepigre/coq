@@ -51,3 +51,5 @@ val do_combined_scheme : lident -> lident list -> unit
 (** Hook called at each inductive type definition *)
 
 val declare_default_schemes : MutInd.t -> unit
+
+val elim_flag : bool ref
