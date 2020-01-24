@@ -446,6 +446,7 @@ let same_flags {
      check_guarded;
      check_positive;
      check_universes;
+     check_conv;
      conv_oracle;
      indices_matter;
      share_reduction;
@@ -455,6 +456,7 @@ let same_flags {
   check_guarded == alt.check_guarded &&
   check_positive == alt.check_positive &&
   check_universes == alt.check_universes &&
+  check_conv = alt.check_conv &&
   conv_oracle == alt.conv_oracle &&
   indices_matter == alt.indices_matter &&
   share_reduction == alt.share_reduction &&

@@ -354,6 +354,9 @@ let check_cast env c ct k expected_type =
   with NotConvertible ->
     error_actual_type env (make_judge c ct) expected_type
 
+let check_cast env a b c d =
+  if (Environ.typing_flags env).check_conv then check_cast env a b c d
+
 (* Inductive types. *)
 
 (* The type is parametric over the uniform parameters whose conclusion

@@ -74,6 +74,9 @@ type typing_flags = {
   check_universes : bool;
   (** If [false] universe constraints are not checked *)
 
+  check_conv : bool;
+  (** If [false], conversion tests are skipped. *)
+
   conv_oracle : Conv_oracle.oracle;
   (** Unfolding strategies for conversion *)
 

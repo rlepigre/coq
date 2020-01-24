@@ -21,6 +21,7 @@ let safe_flags oracle = {
   check_guarded = true;
   check_positive = true;
   check_universes = true;
+  check_conv = true;
   conv_oracle = oracle;
   share_reduction = true;
   enable_VM = true;

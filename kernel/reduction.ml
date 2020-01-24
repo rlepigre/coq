@@ -839,6 +839,9 @@ let gen_conv cv_pb l2r reds env evars univs t1 t2 =
       let _ = clos_gen_conv reds cv_pb l2r evars env (univs, checked_universes) t1 t2 in
         ()
 
+let gen_conv a b c env d e f g =
+  if (Environ.typing_flags env).check_conv then gen_conv a b c env d e f g
+
 (* Profiling *)
 let gen_conv cv_pb ?(l2r=false) ?(reds=TransparentState.full) env ?(evars=(fun _->None), universes env) =
   let evars, univs = evars in
