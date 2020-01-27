@@ -273,6 +273,7 @@ let is_impredicative_univ env u = is_impredicative_sort env (Sorts.sort_of_univ 
 
 let type_in_type env = not (typing_flags env).check_universes
 let deactivated_guard env = not (typing_flags env).check_guarded
+let check_conv env = env.env_typing_flags.check_conv
 
 let indices_matter env = env.env_typing_flags.indices_matter
 

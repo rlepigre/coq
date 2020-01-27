@@ -127,23 +127,29 @@ let infer_declaration env (dcl : constant_entry) =
         let sbst = Univ.make_instance_subst sbst in
         env, sbst, Polymorphic auctx
       in
-      let j = Typeops.infer env body in
-      let typ = match typ with
-        | None ->
-          Vars.subst_univs_level_constr usubst j.uj_type
-        | Some t ->
-           let tj = Typeops.infer_type env t in
-           let _ = Typeops.judge_of_cast env j DEFAULTcast tj in
-           Vars.subst_univs_level_constr usubst tj.utj_val
+      let def, typ = if Option.has_some typ && not (Environ.check_conv env)
+        then body, Option.get typ
+        else
+          let j = Typeops.infer env body in
+          let typ = match typ with
+            | None -> j.uj_type
+            | Some t ->
+              let tj = Typeops.infer_type env t in
+              let _ = Typeops.judge_of_cast env j DEFAULTcast tj in
+              tj.utj_val
+          in
+          j.uj_val, typ
       in
-      let def = Vars.subst_univs_level_constr usubst j.uj_val in
+      let relevance =  Retypeops.relevance_of_term env def in
+      let def = Vars.subst_univs_level_constr usubst def in
+      let typ = Vars.subst_univs_level_constr usubst typ in
       let def = Def (Mod_subst.from_val def) in
         feedback_completion_typecheck feedback_id;
       {
         Cooking.cook_body = def;
         cook_type = typ;
         cook_universes = univs;
-        cook_relevance = Retypeops.relevance_of_term env j.uj_val;
+        cook_relevance = relevance;
         cook_inline = c.const_entry_inline_code;
         cook_context = c.const_entry_secctx;
       }
