@@ -127,18 +127,16 @@ let infer_declaration env (dcl : constant_entry) =
         let sbst = Univ.make_instance_subst sbst in
         env, sbst, Polymorphic auctx
       in
-      let def, typ = if Option.has_some typ && not (Environ.check_conv env)
-        then body, Option.get typ
-        else
-          let j = Typeops.infer env body in
-          let typ = match typ with
-            | None -> j.uj_type
-            | Some t ->
-              let tj = Typeops.infer_type env t in
-              let _ = Typeops.judge_of_cast env j DEFAULTcast tj in
-              tj.utj_val
-          in
-          j.uj_val, typ
+      let def, typ =
+        let j = Typeops.infer env body in
+        let typ = match typ with
+          | None -> j.uj_type
+          | Some t ->
+            let tj = Typeops.infer_type env t in
+            let _ = Typeops.judge_of_cast env j DEFAULTcast tj in
+            tj.utj_val
+        in
+        j.uj_val, typ
       in
       let relevance =  Retypeops.relevance_of_term env def in
       let def = Vars.subst_univs_level_constr usubst def in
