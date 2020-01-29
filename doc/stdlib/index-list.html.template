@@ -626,6 +626,12 @@ through the <tt>Require Import</tt> command.</p>
     plugins/ssr/ssrfun.v
   </dd>
 
+  <dt> <b>Lean Importer</b>:
+  </dt>
+  <dd>
+    plugins/lean_import/Lean.v
+  </dd>
+
   <dt> <b>Ltac2</b>:
     The Ltac2 tactic programming language
   </dt>
