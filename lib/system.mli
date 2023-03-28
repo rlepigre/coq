@@ -116,6 +116,8 @@ val fmt_time_difference : time -> time -> Pp.t
 
 val with_time : batch:bool -> header:Pp.t -> ('a -> 'b) -> 'a -> 'b
 
+val with_instr : batch:bool -> header:Pp.t -> ('a -> 'b) -> 'a -> 'b
+
 (** [get_toplevel_path program] builds a complete path to the
    executable denoted by [program]. This involves:
 

@@ -45,6 +45,7 @@ module State = struct
     sid : Stateid.t;
     proof : Proof.t option;
     time : bool;
+    instr : bool;
   }
 
 end
@@ -57,6 +58,10 @@ let interp_vernac ~check ~interactive ~state ({CAst.loc;_} as com) =
       let com = if state.time
         then begin
           CAst.map (fun cmd -> { cmd with control = ControlTime state.time :: cmd.control }) com
+        end else com in
+      let com = if state.instr
+        then begin
+          CAst.map (fun cmd -> { cmd with control = ControlInstr state.instr :: cmd.control }) com
         end else com in
       let doc, nsid, ntip = Stm.add ~doc:state.doc ~ontop:state.sid (not !Flags.quiet) com in
 

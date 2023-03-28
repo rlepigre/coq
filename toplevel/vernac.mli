@@ -16,6 +16,7 @@ module State : sig
     sid : Stateid.t;
     proof : Proof.t option;
     time : bool;
+    instr : bool;
   }
 
 end

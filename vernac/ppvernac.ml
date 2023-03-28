@@ -1355,6 +1355,7 @@ let pr_vernac_expr v =
 
 let pr_control_flag (p : control_flag) =
   let w = match p with
+    | ControlInstr _ -> keyword "Instructions"
     | ControlTime _ -> keyword "Time"
     | ControlRedirect s -> keyword "Redirect" ++ spc() ++ qs s
     | ControlTimeout n -> keyword "Timeout " ++ int n

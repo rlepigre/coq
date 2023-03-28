@@ -54,6 +54,7 @@ type coqargs_config = {
   native_output_dir : CUnix.physical_path;
   native_include_dirs : CUnix.physical_path list;
   time        : bool;
+  instr       : bool;
   print_emacs : bool;
 }
 

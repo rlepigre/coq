@@ -87,6 +87,7 @@ let print_usage_common co command =
 \n  -set \"Foo Bar=value\"   set Foo Bar to value (value is interpreted according to Foo Bar's type)\
 \n  -unset \"Foo Bar\"       disable Foo Bar (as Unset Foo Bar. in a file)\
 \n  -time                  display the time taken by each command\
+\n  -instr                 display the instruction count for each command (Linux only)\
 \n  -profile-ltac          display the time taken by each (sub)tactic\
 \n  -m, --memory           display total heap size at program exit\
 \n                         (use environment variable\

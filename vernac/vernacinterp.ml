@@ -110,12 +110,17 @@ let mk_time_header =
   (* Drop the time header to print the command, we should indeed use a
      different mechanism to `-time` commands than the current hack of
      adding a time control to the AST. *)
-  let pr_time_header vernac =
-    let vernac = match vernac with
-      | { CAst.v = { control = ControlTime _ :: control; attrs; expr }; loc } ->
-        CAst.make ?loc { control; attrs; expr }
-      | _ -> vernac
+  let pr_time_header { CAst.v = { control; attrs; expr }; loc } =
+    let control =
+      let not_time_or_instr c =
+        match c with
+        | ControlTime _
+        | ControlInstr _ -> false
+        | _ -> true
+      in
+      List.filter not_time_or_instr control
     in
+    let vernac = CAst.make ?loc { control; attrs; expr } in
     Topfmt.pr_cmd_header vernac
   in
   fun vernac -> Lazy.from_fun (fun () -> pr_time_header vernac)
@@ -131,6 +136,9 @@ let interp_control_flag ~loc ~time_header (f : control_flag) ~st
     st.Vernacstate.lemmas, st.Vernacstate.program
   | ControlTimeout timeout ->
     vernac_timeout ~timeout (fun () -> fn ~st) ()
+  | ControlInstr batch ->
+    let header = if batch then Lazy.force time_header  else Pp.mt () in
+    System.with_instr ~batch ~header (fun () -> fn ~st) ()
   | ControlTime batch ->
     let header = if batch then Lazy.force time_header  else Pp.mt () in
     System.with_time ~batch ~header (fun () -> fn ~st) ()

@@ -485,6 +485,7 @@ type nonrec vernac_expr =
   | VernacExtend of extend_name * Genarg.raw_generic_argument list
 
 type control_flag =
+  | ControlInstr of bool
   | ControlTime of bool
   (* boolean is true when the `-time` batch-mode command line flag was set.
      the flag is used to print differently in `-time` vs `Time foo` *)

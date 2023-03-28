@@ -323,6 +323,49 @@ let with_time ~batch ~header f x =
     Feedback.msg_notice (header ++ str msg ++ fmt_time_difference tstart tend ++ str msg2);
     raise e
 
+module WrappedInstr = struct
+  type 'a t =
+    | Res   of 'a
+    | Error of exn
+
+  let reset : unit -> unit t = fun _ ->
+    try Res(Instr.reset ()) with
+    | Instr.Error(_)     as e -> Error(e)
+    | Instr.NotSupported as e -> Error(e)
+
+  let count : unit t -> int t = fun r ->
+    match r with
+    | Error(e) -> Error(e)
+    | Res(_)   ->
+    try Res(Instr.count ()) with
+    | Instr.Error(_)     as e -> Error(e)
+    | Instr.NotSupported as e -> Error(e)
+end
+
+let with_instr ~batch ~header f x =
+  let feedback r status =
+    match r with
+    | WrappedInstr.Res(i)   ->
+        let msg1 = if batch then "" else "Finished transaction using " in
+        let msg2 = if batch then "" else " instructions (" ^ status ^ ")" in
+        Feedback.msg_notice (header ++ str msg1 ++ int i ++ str msg2)
+    | WrappedInstr.Error(e) ->
+        match e with
+        | Instr.Error(err) ->
+            let msg1 = if batch then "" else "Finished transaction with: \"" in
+            let msg2 = if batch then "" else "\" (" ^ status ^ ")" in
+            Feedback.msg_notice (header ++ str msg1 ++ str err ++ str msg2)
+        | _                -> () (* Not supported, do not print anything. *)
+  in
+  let r = WrappedInstr.reset () in
+  try
+    let y = f x in
+    let r = WrappedInstr.count r in
+    feedback r "success"; y
+  with e ->
+    let r = WrappedInstr.count r in
+    feedback r "failure"; raise e
+
 (* We use argv.[0] as we don't want to resolve symlinks *)
 let get_toplevel_path ?(byte=Sys.(backend_type = Bytecode)) top =
   let open Filename in
