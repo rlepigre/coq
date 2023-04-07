@@ -54,8 +54,14 @@ CAMLprim value CAML_count(value vunit) {
   ioctl(fd, PERF_EVENT_IOC_DISABLE, 0);
   counting = 0;
 
-  long long count = 0;
+  int64_t count = 0;
   size_t n = read(fd, &count, sizeof(count));
 
-  return Val_int((int) count);
+  if (n != sizeof(count)) caml_failwith("Perf: failed to retrieve counter.");
+
+  intnat v = Val_long(count);
+
+  if (Long_val(v) != count) caml_failwith("Perf: counter overflow.");
+
+  return v;
 }
