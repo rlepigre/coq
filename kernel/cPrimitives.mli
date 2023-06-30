@@ -64,6 +64,7 @@ type t =
   | Arrayset
   | Arraycopy
   | Arraylength
+  | LetLazy
 
 (** Can raise [Not_found].
     Beware that this is not exactly the reverse of [to_string] below. *)
@@ -112,6 +113,7 @@ and ind_or_type =
   | PITT_ind : 'a prim_ind * 'a -> ind_or_type
   | PITT_type : 'a prim_type * 'a -> ind_or_type
   | PITT_param : int -> ind_or_type (* DeBruijn index referring to prenex type quantifiers *)
+  | PITT_arrow : ind_or_type * ind_or_type -> ind_or_type (* Non-dependent product *)
 
 val typ_univs : 'a prim_type -> Univ.AbstractContext.t
 

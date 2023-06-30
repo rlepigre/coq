@@ -69,6 +69,7 @@ type t =
   | Arrayset
   | Arraycopy
   | Arraylength
+  | LetLazy
 
 let parse = function
   | "int63_head0" -> Int63head0
@@ -126,6 +127,7 @@ let parse = function
   | "array_set" -> Arrayset
   | "array_length" -> Arraylength
   | "array_copy" -> Arraycopy
+  | "let_lazy" -> LetLazy
   | _ -> raise Not_found
 
 let equal (p1 : t) (p2 : t) =
@@ -187,6 +189,7 @@ let hash = function
   | Int63asr -> 53
   | Int63compares -> 54
   | Float64equal -> 55
+  | LetLazy -> 56
 
 (* Should match names in nativevalues.ml *)
 let to_string = function
@@ -245,6 +248,7 @@ let to_string = function
   | Arrayset -> "arrayset"
   | Arraycopy -> "arraycopy"
   | Arraylength -> "arraylength"
+  | LetLazy -> "let_lazy"
 
 type const =
   | Arraymaxlength
@@ -276,9 +280,15 @@ and ind_or_type =
   | PITT_ind : 'a prim_ind * 'a -> ind_or_type
   | PITT_type : 'a prim_type * 'a -> ind_or_type
   | PITT_param : int -> ind_or_type (* DeBruijn index referring to prenex type quantifiers *)
+  | PITT_arrow : ind_or_type * ind_or_type -> ind_or_type (* Non-dependent product *)
 
 let one_univ =
   AbstractContext.make Names.[|Name (Id.of_string "u")|] Constraints.empty
+
+let two_univs =
+  let u1 = Names.(Name (Id.of_string "u1")) in
+  let u2 = Names.(Name (Id.of_string "u2")) in
+  AbstractContext.make [|u1; u2|] Constraints.empty
 
 let typ_univs (type a) (t : a prim_type) = match t with
   | PT_int63 -> AbstractContext.empty
@@ -350,12 +360,22 @@ let types =
       [array_ty], array_ty
   | Arraylength ->
       [array_ty], int_ty
+  | LetLazy ->
+      [PITT_param 2; PITT_arrow (PITT_param 2, PITT_param 1)], PITT_param 1
 
 let one_param =
   (* currently if there's a parameter it's always this *)
   let a_annot = Context.nameR (Names.Id.of_string "A") in
   let ty = Constr.mkType (Universe.make (Level.var 0)) in
   Context.Rel.Declaration.[LocalAssum (a_annot, ty)]
+
+let two_params =
+  (* currently if there's two parameter it's always this *)
+  let t = Context.nameR (Names.Id.of_string "T") in
+  let t_ty = Constr.mkType (Universe.make (Level.var 1)) in
+  let k = Context.nameR (Names.Id.of_string "K") in
+  let k_ty = Constr.mkType (Universe.make (Level.var 0)) in
+  Context.Rel.Declaration.[LocalAssum (t, t_ty); LocalAssum (k, k_ty)]
 
 let params = function
   | Int63head0
@@ -414,6 +434,8 @@ let params = function
   | Arrayset
   | Arraycopy
   | Arraylength -> one_param
+
+  | LetLazy -> two_params
 
 let nparams x = List.length (params x)
 
@@ -475,6 +497,8 @@ let univs = function
   | Arraycopy
   | Arraylength -> one_univ
 
+  | LetLazy -> two_univs
+
 type arg_kind =
   | Kparam (* not needed for the evaluation of the primitive when it reduces *)
   | Kwhnf  (* need to be reduced in whnf before reducing the primitive *)
@@ -490,7 +514,10 @@ let arity t =
 
 let kind t =
   let rec params n = if n <= 0 then [] else Kparam :: params (n - 1) in
-  let args = function PITT_type _ | PITT_ind _ -> Kwhnf | PITT_param _ -> Karg in
+  let args = function
+    | PITT_type _ | PITT_ind _ -> Kwhnf
+    | PITT_param _ | PITT_arrow _ -> Karg
+  in
   params (nparams t) @ List.map args (fst (types t))
 
 let types t =

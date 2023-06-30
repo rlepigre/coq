@@ -1944,6 +1944,11 @@ value coq_interprete
         Next;
       }
 
+      Instruct(LETLAZY) {
+        print_instr("LETLAZY");
+        caml_failwith("Coq VM: LETLAZY not implemented");
+      }
+
 /* Debugging and machine control */
 
       Instruct(STOP){

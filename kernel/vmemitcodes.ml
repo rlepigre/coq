@@ -303,6 +303,7 @@ let check_prim_op = function
   | Float64next_down  -> opCHECKNEXTDOWNFLOAT
   | Arraymake | Arrayget | Arrayset | Arraydefault | Arraycopy | Arraylength ->
     assert false
+  | LetLazy -> opLETLAZY
 
 let check_caml_prim_op = function
 | CAML_Arraymake -> opCHECKCAMLCALL2_1

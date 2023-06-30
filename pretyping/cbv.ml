@@ -224,6 +224,7 @@ module VNativeEntries =
     type elem = cbv_value
     type args = cbv_value array
     type evd = unit
+    type lazy_info = unit
     type uinstance = Univ.Instance.t
 
     let get = Array.get
@@ -351,6 +352,13 @@ module VNativeEntries =
 
     let mkArray env u t ty =
       ARRAY (u,t,ty)
+
+    let eval_lazy lazy_info t =
+      ignore (lazy_info, t); assert false (* TODO *)
+
+    let mkApp t args =
+      ignore (t, args); assert false (* TODO *)
+
   end
 
 module VredNative = RedNative(VNativeEntries)
@@ -633,7 +641,7 @@ and cbv_stack_value info env = function
       begin match List.chop nargs appl with
       | (args, appl) ->
         let stk = if List.is_empty appl then stk else stack_app appl stk in
-        begin match VredNative.red_prim info.env () op u (Array.of_list args) with
+        begin match VredNative.red_prim info.env () () op u (Array.of_list args) with
         | Some (CONSTR (c, args)) ->
           (* args must be moved to the stack to allow future reductions *)
           cbv_stack_value info env (CONSTR(c, [||]), stack_vect_app args stk)

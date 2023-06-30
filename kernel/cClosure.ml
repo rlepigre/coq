@@ -827,7 +827,7 @@ let get_native_args1 op c stk =
   | ((rargs, (kd,a):: nargs), stk) ->
       assert (kd = CPrimitives.Kwhnf);
       (rargs, a, nargs, stk)
-  | _ -> assert false
+  | _ -> assert false (* Reachable if no instruction arg need eval. *)
 
 let check_native_args op stk =
   let nargs = CPrimitives.arity op in
@@ -1006,11 +1006,15 @@ let unfold_projection info p =
 
 open Primred
 
+(* The evaluation function is not yet available. *)
+let eval_lazy_ref = ref (fun _ _ -> assert false)
+
 module FNativeEntries =
   struct
     type elem = fconstr
     type args = fconstr array
     type evd = unit
+    type lazy_info = clos_infos * (fconstr, Util.Empty.t) Declarations.constant_def KeyTable.t
     type uinstance = Univ.Instance.t
 
     let mk_construct c =
@@ -1301,6 +1305,12 @@ module FNativeEntries =
       check_array env;
       { mark = Cstr; term = FArray (u,t,ty)}
 
+    let eval_lazy lazy_info t =
+      !eval_lazy_ref lazy_info t
+
+    let mkApp t args =
+      { mark = Red; term = FApp(t, args) }
+
   end
 
 module FredNative = RedNative(FNativeEntries)
@@ -1431,8 +1441,17 @@ let rec knr info tab m stk =
         | Primitive op ->
           if check_native_args op stk then
             let c = match fl with ConstKey c -> c | RelKey _ | VarKey _ -> assert false in
-            let rargs, a, nargs, stk = get_native_args1 op c stk in
-            kni info tab a (Zprimitive(op,c,rargs,nargs)::stk)
+            (* In our case, none of the instruciton arguments need evaluating!!! *)
+            match get_native_args op c stk with
+            | ((rargs, (kd,a) :: nargs), stk) ->
+              assert (kd = CPrimitives.Kwhnf);
+              kni info tab a (Zprimitive(op,c,rargs,nargs)::stk)
+            | ((rargs, []), stk) ->
+              let args = Array.of_list (List.rev rargs) in
+              let (_,u) = c in
+              match FredNative.red_prim (info_env info) () (info, tab) op u args with
+              | Some m -> kni info tab m stk
+              | None -> assert false
           else
             (* Similarly to fix, partially applied primitives are not Ntrl! *)
             (m, stk)
@@ -1480,7 +1499,7 @@ let rec knr info tab m stk =
        begin match nargs with
          | [] ->
            let args = Array.of_list (List.rev rargs) in
-           begin match FredNative.red_prim (info_env info) () op u args with
+           begin match FredNative.red_prim (info_env info) () (info, tab) op u args with
             | Some m -> kni info tab m s
             | None -> assert false
            end
@@ -1690,6 +1709,11 @@ let whd_val info tab v = term_of_fconstr (kh info tab v [])
 (* strong reduction *)
 let norm_val info tab v = kl info tab v
 let norm_term info tab e t = klt info tab e t
+
+let eval_lazy (info, tab) t =
+  let t = kl info tab t in
+  mk_clos (subs_id 0, Univ.Instance.empty) t
+let _ = eval_lazy_ref := eval_lazy
 
 let whd_stack infos tab m stk = match m.mark with
 | Ntrl ->

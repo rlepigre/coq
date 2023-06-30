@@ -1001,6 +1001,10 @@ let type_of_prim env u t =
     | PITT_ind (i, a) -> tr_ind (tr_type n) i a
     | PITT_type (ty,t) -> tr_prim_type (tr_type n) ty t
     | PITT_param i -> Constr.mkRel (n+i)
+    | PITT_arrow (a, b) ->
+        let a = tr_type n a in
+        let b = tr_type (n+1) b in
+        Constr.mkProd (Context.anonR, a, b)
   in
   let rec nary_op n ret_ty = function
     | [] -> tr_type n ret_ty

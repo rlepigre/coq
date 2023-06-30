@@ -823,7 +823,9 @@ and whd_simpl_stack allowed_reds env sigma =
                   match a with CPrimitives.Kwhnf -> Some i | _ -> None)
                 (CPrimitives.kind (Option.get (get_primitive env cst))) in
             let stack = reduce_params allowed_reds env sigma stack args in
-            whd_const cst env sigma (applist (x, stack)), []
+            let c1 = applist (x, stack) in
+            let c2 = whd_const cst env sigma c1 in
+            if EConstr.eq_constr sigma c1 c2 then (c1, []) else redrec (c2, [])
           with Redelimination -> s')
 
       | _ ->
