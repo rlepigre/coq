@@ -1038,6 +1038,18 @@ module FNativeEntries =
       | FArray (_u,t,_ty) -> t
       | _ -> assert false
 
+    let get_blocked () e =
+      match [@ocaml.warning "-4"] e.term with
+      | FApp (h, [|_; t|]) -> ignore h; t (* TODO *)
+      | FCLOS (c, s) ->
+          let t =
+            match kind c with
+            | App(h, [|_; t|]) -> ignore h; t (* TODO *)
+            | _ -> assert false
+          in
+          {mark = Red; term = FCLOS (t, s)}
+      | _ -> assert false
+
     let dummy = {mark = Ntrl; term = FRel 0}
 
     let current_retro = ref Retroknowledge.empty
@@ -1451,7 +1463,7 @@ let rec knr info tab m stk =
               let (_,u) = c in
               match FredNative.red_prim (info_env info) () (info, tab) op u args with
               | Some m -> kni info tab m stk
-              | None -> assert false
+              | None -> (zip m [Zapp args], stk)
           else
             (* Similarly to fix, partially applied primitives are not Ntrl! *)
             (m, stk)

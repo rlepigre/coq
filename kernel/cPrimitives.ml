@@ -70,6 +70,8 @@ type t =
   | Arraycopy
   | Arraylength
   | LetLazy
+  | Block
+  | Unblock
 
 let parse = function
   | "int63_head0" -> Int63head0
@@ -128,6 +130,8 @@ let parse = function
   | "array_length" -> Arraylength
   | "array_copy" -> Arraycopy
   | "let_lazy" -> LetLazy
+  | "block" -> Block
+  | "unblock" -> Unblock
   | _ -> raise Not_found
 
 let equal (p1 : t) (p2 : t) =
@@ -190,6 +194,8 @@ let hash = function
   | Int63compares -> 54
   | Float64equal -> 55
   | LetLazy -> 56
+  | Block -> 57
+  | Unblock -> 58
 
 (* Should match names in nativevalues.ml *)
 let to_string = function
@@ -249,6 +255,8 @@ let to_string = function
   | Arraycopy -> "arraycopy"
   | Arraylength -> "arraylength"
   | LetLazy -> "let_lazy"
+  | Block -> "block"
+  | Unblock -> "unblock"
 
 type const =
   | Arraymaxlength
@@ -267,6 +275,7 @@ type 'a prim_type =
   | PT_int63 : unit prim_type
   | PT_float64 : unit prim_type
   | PT_array : (Instance.t * ind_or_type) prim_type
+  | PT_blocked : (Instance.t * ind_or_type) prim_type
 
 and 'a prim_ind =
   | PIT_bool : unit prim_ind
@@ -294,6 +303,7 @@ let typ_univs (type a) (t : a prim_type) = match t with
   | PT_int63 -> AbstractContext.empty
   | PT_float64 -> AbstractContext.empty
   | PT_array -> one_univ
+  | PT_blocked -> one_univ
 
 type prim_type_ex = PTE : 'a prim_type -> prim_type_ex
 
@@ -305,6 +315,12 @@ let types =
   let array_ty =
     PITT_type
       (PT_array,
+       (Instance.of_array [|Level.var 0|],
+        PITT_param 1))
+  in
+  let blocked_ty =
+    PITT_type
+      (PT_blocked,
        (Instance.of_array [|Level.var 0|],
         PITT_param 1))
   in
@@ -362,6 +378,10 @@ let types =
       [array_ty], int_ty
   | LetLazy ->
       [PITT_param 2; PITT_arrow (PITT_param 2, PITT_param 1)], PITT_param 1
+  | Block ->
+      [PITT_param 1], blocked_ty
+  | Unblock ->
+      [blocked_ty], PITT_param 1
 
 let one_param =
   (* currently if there's a parameter it's always this *)
@@ -436,6 +456,8 @@ let params = function
   | Arraylength -> one_param
 
   | LetLazy -> two_params
+  | Block
+  | Unblock -> one_param
 
 let nparams x = List.length (params x)
 
@@ -499,6 +521,9 @@ let univs = function
 
   | LetLazy -> two_univs
 
+  | Block
+  | Unblock -> one_univ
+
 type arg_kind =
   | Kparam (* not needed for the evaluation of the primitive when it reduces *)
   | Kwhnf  (* need to be reduced in whnf before reducing the primitive *)
@@ -515,6 +540,7 @@ let arity t =
 let kind t =
   let rec params n = if n <= 0 then [] else Kparam :: params (n - 1) in
   let args = function
+    | PITT_type (PT_blocked, _) -> Karg
     | PITT_type _ | PITT_ind _ -> Kwhnf
     | PITT_param _ | PITT_arrow _ -> Karg
   in
@@ -543,6 +569,7 @@ let prim_type_to_string (type a) (ty : a prim_type) = match ty with
   | PT_int63 -> "int63_type"
   | PT_float64 -> "float64_type"
   | PT_array -> "array_type"
+  | PT_blocked -> "blocked_type"
 
 let op_or_type_to_string = function
   | OT_op op -> to_string op
@@ -553,6 +580,7 @@ let prim_type_of_string = function
   | "int63_type" -> PTE PT_int63
   | "float64_type" -> PTE PT_float64
   | "array_type" -> PTE PT_array
+  | "blocked_type" -> PTE PT_blocked
   | _ -> raise Not_found
 
 let op_or_type_of_string s =

@@ -37,6 +37,11 @@ let add_retroknowledge retro action =
         (match retro.retro_array with
          | None -> { retro with retro_array = Some c }
          | Some c' -> check_same_types typ c c'; retro)
+
+      | PT_blocked ->
+        (match retro.retro_blocked with
+         | None -> { retro with retro_blocked = Some c }
+         | Some c' -> check_same_types typ c c'; retro)
     end
 
   | Register_ind(pit,ind) ->
@@ -145,6 +150,7 @@ module type RedNativeEntries =
     val get_int : evd -> elem -> Uint63.t
     val get_float : evd -> elem -> Float64.t
     val get_parray : evd -> elem -> elem Parray.t
+    val get_blocked : evd -> elem -> elem
     val mkInt : env -> Uint63.t -> elem
     val mkFloat : env -> Float64.t -> elem
     val mkBool : env -> bool -> elem
@@ -212,6 +218,8 @@ struct
   let get_float2 evd args = get_float evd args 0, get_float evd args 1
 
   let get_parray evd args i = E.get_parray evd (E.get args i)
+
+  exception Blocked
 
   let red_prim_aux env evd lazy_info op u args =
     let open CPrimitives in
@@ -401,12 +409,17 @@ struct
       let t = E.get args 2 in
       let f = E.get args 3 in
       E.mkApp f [|E.eval_lazy lazy_info t|]
+    | Block ->
+      raise Blocked
+    | Unblock ->
+      let t = E.get args 1 in
+      E.get_blocked evd t
 
   let red_prim env evd lazy_info p u args =
     try
       let r =
         red_prim_aux env evd lazy_info p u args
       in Some r
-    with NativeDestKO -> None
+    with NativeDestKO | Blocked -> None
 
 end

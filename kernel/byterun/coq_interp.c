@@ -1949,6 +1949,16 @@ value coq_interprete
         caml_failwith("Coq VM: LETLAZY not implemented");
       }
 
+      Instruct(BLOCK) {
+        print_instr("BLOCK");
+        caml_failwith("Coq VM: BLOCK not implemented");
+      }
+
+      Instruct(UNBLOCK) {
+        print_instr("UNBLOCK");
+        caml_failwith("Coq VM: UNBLOCK not implemented");
+      }
+
 /* Debugging and machine control */
 
       Instruct(STOP){

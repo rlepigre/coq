@@ -1112,6 +1112,7 @@ let compile_prim env decl cond paux =
           | CPrimitives.PT_float64 -> Is_float
           | CPrimitives.PT_array -> Is_parray
           | CPrimitives.PT_int63 -> assert false
+          | CPrimitives.PT_blocked -> assert false (* FIXME? *)
           in
            List.fold_left
              (fun ml (_, c) -> app_prim MLand [| ml; app_prim check [|c|]|])

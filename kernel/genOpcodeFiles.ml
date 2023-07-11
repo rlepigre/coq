@@ -156,6 +156,8 @@ let opcodes =
     "CHECKCAMLCALL2", 2;
     "CHECKCAMLCALL3_1", 2;
     "LETLAZY", 2;
+    "BLOCK", 1;
+    "UNBLOCK", 1;
     "STOP", 0
   |]
 

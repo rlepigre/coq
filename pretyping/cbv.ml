@@ -250,6 +250,9 @@ module VNativeEntries =
       | ARRAY(_u,t,_ty) -> t
       | _ -> raise Primred.NativeDestKO
 
+    let get_blocked () e =
+      ignore e; assert false (* TODO *)
+
     let mkInt env i = VAL(0, mkInt i)
 
     let mkFloat env f = VAL(0, mkFloat f)

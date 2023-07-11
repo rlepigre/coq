@@ -311,6 +311,13 @@ let type_of_prim_type _env u (type a) (prim : a CPrimitives.prim_type) = match p
       Constr.mkProd(Context.anonR, ty , ty)
     | _ -> anomaly Pp.(str"universe instance for array type should have length 1")
     end
+  | CPrimitives.PT_blocked ->
+    begin match Univ.Instance.to_array u with
+    | [|u|] ->
+      let ty = Constr.mkType (Univ.Universe.make u) in
+      Constr.mkProd(Context.anonR, ty , ty)
+    | _ -> anomaly Pp.(str"universe instance for blocked type should have length 1")
+    end
 
 let type_of_int env =
   match env.retroknowledge.Retroknowledge.retro_int63 with
@@ -327,6 +334,12 @@ let type_of_array env u =
   match env.retroknowledge.Retroknowledge.retro_array with
   | Some c -> mkConstU (c,u)
   | None -> CErrors.user_err Pp.(str"The type array must be registered before this construction can be typechecked.")
+
+let type_of_blocked env u =
+  assert (Univ.Instance.length u = 1);
+  match env.retroknowledge.Retroknowledge.retro_blocked with
+  | Some c -> mkConstU (c,u)
+  | None -> CErrors.user_err Pp.(str"The type blocked terms must be registered before this construction can be typechecked.")
 
 (* Type of product *)
 
@@ -953,6 +966,7 @@ let type_of_prim env u t =
   let int_ty () = type_of_int env in
   let float_ty () = type_of_float env in
   let array_ty u a = mkApp(type_of_array env u, [|a|]) in
+  let blocked_ty u a = mkApp(type_of_blocked env u, [|a|]) in
   let bool_ty () =
     match env.retroknowledge.Retroknowledge.retro_bool with
     | Some ((ind,_),_) -> UM.mkInd ind
@@ -988,6 +1002,7 @@ let type_of_prim env u t =
     | PT_int63 -> int_ty t
     | PT_float64 -> float_ty t
     | PT_array -> array_ty (fst t) (tr_type (snd t))
+    | PT_blocked -> blocked_ty (fst t) (tr_type (snd t))
   in
   let tr_ind (tr_type : ind_or_type -> constr) (type t) (i : t prim_ind) (a : t) = match i, a with
     | PIT_bool, () -> bool_ty ()

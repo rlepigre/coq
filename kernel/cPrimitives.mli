@@ -65,6 +65,8 @@ type t =
   | Arraycopy
   | Arraylength
   | LetLazy
+  | Block
+  | Unblock
 
 (** Can raise [Not_found].
     Beware that this is not exactly the reverse of [to_string] below. *)
@@ -100,6 +102,7 @@ type 'a prim_type =
   | PT_int63 : unit prim_type
   | PT_float64 : unit prim_type
   | PT_array : (Univ.Instance.t * ind_or_type) prim_type
+  | PT_blocked : (Univ.Instance.t * ind_or_type) prim_type
 
 and 'a prim_ind =
   | PIT_bool : unit prim_ind

@@ -582,6 +582,9 @@ struct
     | Array(_u,t,def,_ty) -> Parray.of_array t def
     | _ -> raise Not_found
 
+  let get_blocked evd e =
+    ignore (evd, e); assert false (* TODO *)
+
   let mkInt env i =
     mkInt i
 

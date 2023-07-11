@@ -117,6 +117,9 @@ val judge_of_float : env -> Float64.t -> unsafe_judgment
 val type_of_array : env -> Univ.Instance.t -> types
 val judge_of_array : env -> Univ.Instance.t -> unsafe_judgment array -> unsafe_judgment -> unsafe_judgment
 
+val type_of_blocked : env -> Univ.Instance.t -> types
+(*val judge_of_blocked : env -> Univ.Instance.t -> unsafe_judgment -> unsafe_judgment*)
+
 val type_of_prim_type : env -> Univ.Instance.t -> 'a CPrimitives.prim_type -> types
 val type_of_prim : env -> Univ.Instance.t -> CPrimitives.t -> types
 val type_of_prim_or_type : env -> Univ.Instance.t -> CPrimitives.op_or_type -> types

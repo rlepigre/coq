@@ -304,6 +304,8 @@ let check_prim_op = function
   | Arraymake | Arrayget | Arrayset | Arraydefault | Arraycopy | Arraylength ->
     assert false
   | LetLazy -> opLETLAZY
+  | Block -> opBLOCK
+  | Unblock -> opUNBLOCK
 
 let check_caml_prim_op = function
 | CAML_Arraymake -> opCHECKCAMLCALL2_1
