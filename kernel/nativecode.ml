@@ -1031,7 +1031,7 @@ let extract_prim env ml_of l =
   let cond = ref [] in
   let type_args p =
     let params, args_ty, _ = CPrimitives.types p in
-    List.length params, Array.of_list args_ty in
+    List.length params, Array.of_list (List.map snd args_ty) in
   let rec aux l =
     match l with
     | Lprim (kn, p, args) ->

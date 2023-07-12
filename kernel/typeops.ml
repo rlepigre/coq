@@ -1015,17 +1015,20 @@ let type_of_prim env u t =
   let rec tr_type n = function
     | PITT_ind (i, a) -> tr_ind (tr_type n) i a
     | PITT_type (ty,t) -> tr_prim_type (tr_type n) ty t
-    | PITT_param i -> Constr.mkRel (n+i)
-    | PITT_arrow (a, b) ->
+    | PITT_param (i, xs) ->
+        let h = Constr.mkRel (n+i) in
+        if xs = [] then h else
+        let xs = Array.of_list (List.map (fun i -> Constr.mkRel (n+i)) xs) in
+        Constr.mkApp (h, xs)
+    | PITT_prod (x, a, b) ->
         let a = tr_type n a in
-        let b = tr_type (n+1) b in
-        Constr.mkProd (Context.anonR, a, b)
+        let b = tr_type n b in
+        Constr.mkProd (x, a, b)
   in
   let rec nary_op n ret_ty = function
     | [] -> tr_type n ret_ty
-    | arg_ty :: r ->
-        Constr.mkProd (Context.nameR (Id.of_string "x"),
-                       tr_type n arg_ty, nary_op (n + 1) ret_ty r)
+    | (x, arg_ty) :: r ->
+        Constr.mkProd (x, tr_type n arg_ty, nary_op (n + 1) ret_ty r)
   in
   let params, args_ty, ret_ty = types t in
   assert (AbstractContext.size (univs t) = Instance.length u);
