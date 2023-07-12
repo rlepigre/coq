@@ -140,8 +140,6 @@ val empty_stack : stack
 val append_stack : fconstr array -> stack -> stack
 
 val check_native_args : CPrimitives.t -> stack -> bool
-val get_native_args1 : CPrimitives.t -> pconstant -> stack ->
-  fconstr list * fconstr * fconstr next_native_args * stack
 
 val stack_args_size : stack -> int
 

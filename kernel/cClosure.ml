@@ -822,13 +822,6 @@ let get_native_args op c stk =
     | (Zprimitive _ | ZcaseT _ | Zproj _ | Zfix _) :: _ | [] -> assert false
   in strip_rec [] {mark = Red; term = FFlex(ConstKey c)} 0 kargs stk
 
-let get_native_args1 op c stk =
-  match get_native_args op c stk with
-  | ((rargs, (kd,a):: nargs), stk) ->
-      assert (kd = CPrimitives.Kwhnf);
-      (rargs, a, nargs, stk)
-  | _ -> assert false (* Reachable if no instruction arg need eval. *)
-
 let check_native_args op stk =
   let nargs = CPrimitives.arity op in
   let rargs = stack_args_size stk in
@@ -1778,7 +1771,14 @@ let unfold_ref_with_args infos tab fl v =
   match ref_value_cache infos flags tab fl with
   | Def def -> Some (def, v)
   | Primitive op when check_native_args op v ->
-    let c = match [@ocaml.warning "-4"] fl with ConstKey c -> c | _ -> assert false in
-    let rargs, a, nargs, v = get_native_args1 op c v in
-    Some (a, (Zupdate a::(Zprimitive(op,c,rargs,nargs)::v)))
+    begin
+      let c = match [@ocaml.warning "-4"] fl with ConstKey c -> c | _ -> assert false in
+      match get_native_args op c v with
+      | ((rargs, (kd,a):: nargs), v) ->
+          assert (kd = CPrimitives.Kwhnf);
+          Some (a, (Zupdate a::(Zprimitive(op,c,rargs,nargs)::v)))
+      | ((rargs, []), v) ->
+          ignore (rargs, v);
+          assert false (* FIXME Reachable if no instruction arg needs eval. *)
+    end
   | Undef _ | OpaqueDef _ | Primitive _ -> None
