@@ -405,6 +405,7 @@ val generalize_dep  : ?with_let:bool (** Don't lose let bindings *) -> constr  -
 val constr_eq : strict:bool -> constr -> constr -> unit Proofview.tactic
 
 val unify           : ?state:TransparentState.t -> constr -> constr -> unit Proofview.tactic
+val evarconv_unify : ?state:TransparentState.t -> ?with_ho:bool -> constr -> constr -> unit Proofview.tactic
 
 val abstract_generalize : ?generalize_vars:bool -> ?force_dep:bool -> Id.t -> unit Proofview.tactic
 val specialize_eqs : Id.t -> unit Proofview.tactic
