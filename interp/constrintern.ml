@@ -2540,7 +2540,9 @@ let internalize globalenv env pattern_mode (_, ntnvars as lvar) c =
       a :: (intern_args env subscopes args)
 
   in
-  intern env c
+  NewProfile.profile "intern" (fun () ->
+      intern env c)
+    ()
 
 (**************************************************************************)
 (* Functions to translate constr_expr into glob_constr                    *)
