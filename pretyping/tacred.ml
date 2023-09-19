@@ -16,7 +16,6 @@ open Context
 open Termops
 open Environ
 open EConstr
-open CClosure
 open Reductionops
 
 module RelDecl = Context.Rel.Declaration
@@ -655,7 +654,7 @@ let whd_nothing_for_iota env sigma s =
 (* The reductions that should be performed as part of the simpl tactic,
   excluding symbols that have the NeverUnfold flag. *)
 let make_simpl_reds env =
-  let open CClosure.RedFlags in
+  let open RedFlags in
   let open ReductionBehaviour in
   let red_sub_const x reds =
     match x with
@@ -937,7 +936,7 @@ and whd_construct_stack allowed_reds env sigma s =
 *)
 
 let try_red_product env sigma c =
-  let simpfun c = clos_norm_flags betaiotazeta env sigma c in
+  let simpfun c = clos_norm_flags RedFlags.betaiotazeta env sigma c in
   let rec redrec env x =
     let x = whd_betaiota env sigma x in
     match EConstr.kind sigma x with
@@ -1068,7 +1067,7 @@ let hnf_constr0 env sigma c =
 
 let hnf_constr env sigma c =
   let c = whd_simpl_orelse_delta_but_fix env sigma (c, []) in
-  clos_norm_flags betaiota env sigma c
+  clos_norm_flags RedFlags.betaiota env sigma c
 
 (* The "simpl" reduction tactic *)
 
@@ -1251,9 +1250,9 @@ let fold_commands cl env sigma c =
 let cbv_norm_flags flags env sigma t =
   Cbv.(cbv_norm (create_cbv_infos flags env sigma) t)
 
-let cbv_beta = cbv_norm_flags beta
-let cbv_betaiota = cbv_norm_flags betaiota
-let cbv_betadeltaiota env sigma =  cbv_norm_flags all env sigma
+let cbv_beta = cbv_norm_flags RedFlags.beta
+let cbv_betaiota = cbv_norm_flags RedFlags.betaiota
+let cbv_betadeltaiota env sigma = cbv_norm_flags RedFlags.all env sigma
 
 let compute = cbv_betadeltaiota
 
@@ -1368,18 +1367,18 @@ let one_step_reduce env sigma c =
       | Cast (c,_,_) -> redrec (c,stack)
       | Case (ci,u,pms,p,iv,c,lf) ->
           (try
-             (special_red_case betadeltazeta env sigma (ci,u,pms,p,iv,c,lf),
+             (special_red_case RedFlags.betadeltazeta env sigma (ci,u,pms,p,iv,c,lf),
               stack)
            with Redelimination -> raise NotStepReducible)
       | Fix fix ->
-          (try match reduce_fix betadeltazeta env sigma fix stack with
+          (try match reduce_fix RedFlags.betadeltazeta env sigma fix stack with
              | Reduced s' -> s'
              | NotReducible -> raise NotStepReducible
            with Redelimination -> raise NotStepReducible)
       | _ when isEvalRef env sigma x ->
           let ref,u = destEvalRefU sigma x in
           (try
-             fst (red_elim_const betadeltazeta env sigma ref u stack)
+             fst (red_elim_const RedFlags.betadeltazeta env sigma ref u stack)
            with Redelimination ->
              match reference_opt_value env sigma ref u with
                | Some d -> (d, stack)
