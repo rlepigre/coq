@@ -202,3 +202,18 @@ val term_of_process : fconstr -> stack -> constr
 val to_constr : lift Univ.puniverses -> fconstr -> constr
 
 (** End of cbn debug section i*)
+
+val all : RedFlags.reds
+val allnolet : RedFlags.reds
+val beta : RedFlags.reds
+val betadeltazeta : RedFlags.reds
+val betaiota : RedFlags.reds
+val betaiotazeta : RedFlags.reds
+val betazeta : RedFlags.reds
+val delta : RedFlags.reds
+val zeta : RedFlags.reds
+val nored : RedFlags.reds
+
+module RedFlags : sig
+  include module type of RedFlags
+end with type reds = RedFlags.reds and type red_kind = RedFlags.red_kind

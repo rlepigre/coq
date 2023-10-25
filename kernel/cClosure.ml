@@ -1606,3 +1606,16 @@ let unfold_ref_with_args infos tab fl v =
     let rargs, a, nargs, v = get_native_args1 op c v in
     Some (a, (Zupdate a::(Zprimitive(op,c,rargs,nargs)::v)))
   | Undef _ | OpaqueDef _ | Primitive _ -> None
+
+let all = RedFlags.all
+let allnolet = RedFlags.allnolet
+let beta = RedFlags.beta
+let betadeltazeta = RedFlags.betadeltazeta
+let betaiota = RedFlags.betaiota
+let betaiotazeta = RedFlags.betaiotazeta
+let betazeta = RedFlags.betazeta
+let delta = RedFlags.delta
+let zeta = RedFlags.zeta
+let nored = RedFlags.nored
+
+module RedFlags = RedFlags
