@@ -694,7 +694,7 @@ let () =
     let open Declarations in
     let ans = Environ.lookup_mind ind env in
     let _ = ans.mind_packets.(i).mind_consnames.(k) in
-    return (Value.of_ext val_constructor ((ind, i), (k + 1)))
+    return (Tac2ffi.of_ext val_constructor ((ind, i), (k + 1)))
   with e when CErrors.noncritical e ->
     throw err_notfound
 
