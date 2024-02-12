@@ -1364,6 +1364,9 @@ module type MapType = sig
   val repr : S.elt Tac2ffi.repr
 end
 
+type ('a,'set,'map) map =
+  (module MapType with type S.elt = 'a and type S.t = 'set and type valmap = 'map)
+
 module MapTypeV = struct
   type _ t = Map : (module MapType with type S.elt = 't and type S.t = 'set and type valmap = 'map)
     -> ('t * 'set * 'map) t
