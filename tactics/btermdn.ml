@@ -21,13 +21,20 @@ let dnet_depth = ref 8
 
 type term_label =
 | GRLabel of GlobRef.t
-| ProjLabel of Projection.t
+| ProjLabel of Projection.Repr.t * int
+ (** [ProjLabel (p, n)] represents a possibly partially applied projection [p]
+     with [n] arguments missing to be fully applied. [n] is always zero for
+     labels derived from [Proj] terms but can be greater than zero for labels
+     derived from compatibility constants. *)
 | ProdLabel
 | SortLabel
 
 let compare_term_label t1 t2 = match t1, t2 with
 | GRLabel gr1, GRLabel gr2 -> GlobRef.CanOrd.compare gr1 gr2
-| ProjLabel p1, ProjLabel p2 -> Projection.CanOrd.compare p1 p2
+| ProjLabel (p1, n1), ProjLabel (p2, n2) ->
+  let c = Int.compare n1 n2 in
+  if c <> 0 then c else
+    (Projection.Repr.CanOrd.compare p1 p2)
 | _ -> Stdlib.compare t1 t2 (** OK *)
 
 type 'res lookup_res = 'res Dn.lookup_res = Label of 'res | Nothing | Everything
@@ -70,6 +77,16 @@ let evaluable_named id env ts =
 let evaluable_projection p _env ts =
   (match ts with None -> true | Some ts -> TransparentState.is_transparent_projection ts (Projection.repr p))
 
+let label_of_opaque_constant c stack =
+  match Structures.PrimitiveProjections.find_opt c with
+  | None -> (GRLabel (ConstRef c), stack)
+  | Some p ->
+    let n_args_needed = Structures.Structure.projection_nparams c + 1 in (* +1 for the record value itself *)
+    let n_args_given = List.length stack in
+    let n_args_missing = max (n_args_needed - n_args_given) 0 in
+    let n_args_drop = min (n_args_needed - 1) n_args_given in (* we do not drop the record value from the stack *)
+    (ProjLabel (p, n_args_missing), List.skipn n_args_drop stack)
+
 (* The pattern view functions below try to overapproximate βι-neutral terms up
    to η-conversion. Some historical design choices are still incorrect w.r.t. to
    this specification. TODO: try to make them follow the spec. *)
@@ -81,10 +98,10 @@ let constr_val_discr env sigma ts t =
     match EConstr.kind sigma t with
     | App (f,l) -> decomp (Array.fold_right (fun a l -> a::l) l stack) f
     | Proj (p,_,c) when evaluable_projection p env ts -> Everything
-    | Proj (p,_,c) -> Label(ProjLabel p, c :: stack)
+    | Proj (p,_,c) -> Label(ProjLabel (Projection.repr p, 0), c :: stack)
     | Cast (c,_,_) -> decomp stack c
     | Const (c,_) when evaluable_constant c env ts -> Everything
-    | Const (c,_) -> Label(GRLabel (ConstRef c), stack)
+    | Const (c,_) -> Label (label_of_opaque_constant c stack)
     | Ind (ind_sp,_) -> Label(GRLabel (IndRef ind_sp), stack)
     | Construct (cstr_sp,_) -> Label(GRLabel (ConstructRef cstr_sp), stack)
     | Var id when evaluable_named id env ts -> Everything
@@ -106,13 +123,13 @@ let constr_pat_discr env ts p =
     match p with
     | PApp (f,args) -> decomp (Array.to_list args @ stack) f
     | PProj (p,c) when evaluable_projection p env ts -> None
-    | PProj (p,c) -> Some (ProjLabel p, c :: stack)
+    | PProj (p,c) -> Some (ProjLabel (Projection.repr p, 0), c :: stack)
     | PRef ((IndRef _) as ref)
     | PRef ((ConstructRef _ ) as ref) -> Some (GRLabel ref, stack)
     | PRef (VarRef v) when evaluable_named v env ts -> None
     | PRef ((VarRef _) as ref) -> Some (GRLabel ref, stack)
     | PRef (ConstRef c) when evaluable_constant c env ts -> None
-    | PRef ((ConstRef _) as ref) -> Some (GRLabel ref, stack)
+    | PRef (ConstRef c) -> Some (label_of_opaque_constant c stack)
     | PVar v when evaluable_named v env ts -> None
     | PVar v -> Some (GRLabel (VarRef v), stack)
     | PProd (_,d,c) when stack = [] -> Some (ProdLabel, [d ; c])
