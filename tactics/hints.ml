@@ -182,6 +182,7 @@ type hint_mode =
 type 'a hints_transparency_target =
   | HintsVariables
   | HintsConstants
+  | HintsProjections
   | HintsReferences of 'a list
 
 type import_level = HintLax | HintWarn | HintStrict
@@ -1064,6 +1065,7 @@ let add_transparency dbname target b =
     match target with
     | HintsVariables -> { st with tr_var = (if b then Id.Pred.full else Id.Pred.empty) }
     | HintsConstants -> { st with tr_cst = (if b then Cpred.full else Cpred.empty) }
+    | HintsProjections -> { st with tr_prj = (if b then PRpred.full else PRpred.empty) }
     | HintsReferences grs ->
       List.fold_left (fun st gr ->
         match gr with
@@ -1135,7 +1137,7 @@ type hint_obj = {
 let is_trivial_action = function
 | AddTransparency { grefs } ->
   begin match grefs with
-  | HintsVariables | HintsConstants -> false
+  | HintsVariables | HintsConstants | HintsProjections -> false
   | HintsReferences l -> List.is_empty l
   end
 | AddHints l -> List.is_empty l
@@ -1256,6 +1258,7 @@ let subst_autohint (subst, obj) =
         match target with
         | HintsVariables -> target
         | HintsConstants -> target
+        | HintsProjections -> target
         | HintsReferences grs ->
           let grs' = List.Smart.map (subst_evaluable_reference subst) grs in
           if grs == grs' then target
@@ -1289,7 +1292,7 @@ let discharge_autohint obj =
     let action = match obj.hint_action with
     | AddTransparency { grefs; state } ->
       let grefs = match grefs with
-      | HintsVariables | HintsConstants -> grefs
+      | HintsVariables | HintsConstants | HintsProjections -> grefs
       | HintsReferences grs ->
         let filter = function
         | Evaluable.EvalConstRef c -> true
@@ -1506,7 +1509,7 @@ let add_hints ~locality dbnames h =
   let () = match h with
   | HintsResolveEntry _ | HintsImmediateEntry _ | HintsUnfoldEntry _ | HintsExternEntry _ ->
     check_locality locality
-  | HintsTransparencyEntry ((HintsVariables | HintsConstants), _) -> ()
+  | HintsTransparencyEntry ((HintsVariables | HintsConstants | HintsProjections), _) -> ()
   | HintsTransparencyEntry (HintsReferences grs, _) ->
     let iter gr =
       let gr = global_of_evaluable_reference gr in
