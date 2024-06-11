@@ -9,7 +9,6 @@ Definition char63_valid (c : char63) :=
 
 Definition to_list (s : string) : list char63 :=
   List.map (fun i => get s (of_nat i)) (List.seq 0 (to_nat (length s))).
-Arguments to_list _%_pstring.
 
 Fixpoint of_list (cs : list char63) : string :=
   match cs with
